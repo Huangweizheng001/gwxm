@@ -1,0 +1,1 @@
+export const SET_RIGHTNAVROOT = 'SET_RIGHTNAVROOT'
