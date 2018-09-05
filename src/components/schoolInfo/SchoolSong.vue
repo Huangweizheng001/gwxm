@@ -2,7 +2,7 @@
     <div class="list-wrapper">
         <div v-if="isShowList" class="list-content">
             <div class="list-item" v-for="item in listArr">
-                <router-link :to='{path: currentPath, query:{nid: item.newsId}}' class="item" tag="a" target="_blank">
+                <router-link :to='{path: currentPath, query:{nid: item.id}}' class="item" tag="a" target="_blank">
                     <i class="circle"></i>
                     {{item.name}}
                     <span class="time"><b></b>{{item.reportDate}}</span>
@@ -12,7 +12,7 @@
                     {{item.name}}
                     <span class="time"><b></b>{{item.reportDate}}</span>
                 </a> -->
-            </div>
+            </div> 
             <!--枫叶-->
             <ul class="pagenationbox" style="position: absolute;bottom: 0;left: 0;right: 0">
                 <li v-cloak v-show="current != 1" @click="current-- && goto(current--)">
@@ -49,11 +49,10 @@
 <script>
 import Loading from '@/base/loading/Loading'
 import Nodata from '@/base/nodata/Nodata'
-import {getNewsList, getNewsDetail, searchByKey} from '@/api/dynamic'
+import {schoolSong, schoolSongDetail} from '@/api/dynamic'
 export default {
     data() {
         return {
-            isSearch: false, //判断是否是搜索状态
             isShowList: true, //判断是否展示列表状态
             showItem:4,//页码显示条数
             allpage: 0,//总页数
@@ -91,43 +90,19 @@ export default {
         this.isShowList = this.$route.query.nid == undefined ? true : false
         if (this.isShowList) {
             // 加载列表
-            this.isSearch = this.$route.path.split('/')[1] == 'search' ? true : false
-            if (this.isSearch) {//加载搜索列表
-                this.getSearchList(1)
-            } else {//默认列表状态
-                this.getList(1)
-            }
+            this.getList(1)
         } else {
             // 加载详情
             this.getDetail()
         }  
     },
     methods: {
-        getSearchList(pageIndex) {//搜索页下的列表
-            this.currentPath = this.$route.path
-            this.isload = false
-            let key = this.$route.query.key
-            let id = this.$route.path.split('/')[2]
-            searchByKey(key, id, pageIndex, 10).then(res => {
-                this.isload = true
-                this.nodata = false
-                if (res.code == 200) {
-                    if (res.rows.length < 1) {
-                        // console.log("没有数据")
-                        this.nodata = true
-                    }
-                    this.listArr = res.rows
-                    this.allpage = res.totalPageCount
-                }
-            })
-        },
         getList(pageIndex) {//默认列表
             // 获取二级导航id
             this.currentPath = this.$route.path
-            let id = this.$route.path.split('/')[2]
             this.isload = false
             this.nodata = false
-            getNewsList(id, pageIndex, 10).then(res => {
+            schoolSong().then(res => {
                 this.isload = true
                 if (res.code == 200) {
                     if (res.rows.length < 1) {
@@ -139,9 +114,10 @@ export default {
                 }
             })
         },
-        getDetail() {//单条新闻详情
+        getDetail() {//单条详情
             this.isload = false
-            getNewsDetail(this.$route.query.nid).then(res => {
+            // console.log(this.$route.query.nid)
+            schoolSongDetail(this.$route.query.nid).then(res => {
                 this.isload = true
                 if (res.code == 200) {
                     if (res.rows && res.rows.length > 0) {
@@ -150,9 +126,6 @@ export default {
                 }
             })
         },
-        // goToDetail(id) {
-        //     this.$router.push({ path: this.$route.path, query: {nid: id} })
-        // },
         goto: function(index) { //枫叶处理
             var _this=this;
             if(index == this.current) return;
@@ -162,12 +135,7 @@ export default {
                 return false;
             }
             this.current = index;
-            if (this.isSearch) {
-                this.getSearchList(this.current)
-            } else {
-                this.getList(this.current)
-            }
-            
+            this.getList(this.current)
         }
     },
     watch: {
@@ -176,12 +144,7 @@ export default {
             this.isShowList = this.$route.query.nid == undefined ? true : false
             if (this.isShowList) {
                 // 加载列表
-                this.isSearch = this.$route.path.split('/')[1] == 'search' ? true : false
-                if (this.isSearch) {
-                    this.getSearchList(1)
-                } else {
-                    this.getList(1)
-                }
+                this.getList(1)
             } else {
                 // 加载详情
                 this.getDetail()
@@ -274,4 +237,3 @@ export default {
         }
     }
 </style>
-

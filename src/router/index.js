@@ -1,20 +1,32 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Axios from 'axios'
-import {mapMutations} from 'vuex'
-// const _import = require('./_import_' + process.env.NODE_ENV)
-import Index from '@/components/index/Index'
-import MiddleLayer from '@/components/middleLayer/MiddleLayer'
+import {getHeadNav} from '@/api/dynamic'
+import MiddleLayer from '@/components/Layout/middleLayer/MiddleLayer'
 import Detail from '@/components/detail/Detail'
 import Textures from '@/components/textures/Textures'
-import Card from '@/components/card/Card'
 import List from '@/components/list/List'
-import Store from '@/store/index'
+import Index from '@/components/index/Index'
+import Threed from '@/components/threed/Threed'
+import OnlineClass from '@/components/onlineClass/OnlineClass'
+import TeachResource from '@/components/teachResource/TeachResource'
+import Download from '@/components/teachResource/Download'
+import Tips404 from '@/base/404/404'
+import DigitalLibrary from '@/components/digitalLibrary/DigitalLibrary'
+import BooK from '@/components/digitalLibrary/BooK'
+import SchoolHonor from '@/components/schoolInfo/SchoolHonor'
+import SchoolSong from '@/components/schoolInfo/SchoolSong'
+import SchoolStyle from '@/components/schoolInfo/SchoolStyle'
+
 
 Vue.use(Router)
 let indexRouter = new Router({
+  mode:'history',
   routes: [
     // 静态路由
+    {
+      path: '/',
+      redirect: '/index'
+    },
     {
       path: '/index',
       name: '首页',
@@ -39,17 +51,17 @@ let indexRouter = new Router({
         {
           path: '3',
           name: '校园风采',
-          component: Card
+          component: SchoolStyle
         },
         {
           path: '4',
           name: '学校荣誉',
-          component: Card
+          component: SchoolHonor
         },
         {
           path: '5',
           name: '校训校徽校歌',
-          component: List
+          component: SchoolSong
         }
       ]
     },
@@ -62,28 +74,71 @@ let indexRouter = new Router({
         {
           path: '1',
           name: '在线课堂',
-          component: Card
+          component: OnlineClass
         },
         {
           path: '2',
           name: '教学资源',
-          component: Card
+          component: TeachResource
         },
         {
           path: '3',
           name: '数字图书馆',
-          component: Card
+          component: DigitalLibrary
         }
       ]
-    }
+    },
+    {
+      path: '/download',
+      name: '资源下载',
+      component: Download
+    },
+    {
+      path: '/book',
+      name: '电子图书',
+      component: BooK
+    },
+    {
+      path:'/33',
+      name:'学校新闻',
+      component: MiddleLayer,
+      redirect:'/33/34',
+      children:[
+        {
+           path:'34',
+           name:'校园新闻',
+           component:List
+        },
+        {
+           path:'35',
+           name:'专属报道',
+           component:List
+        },
+        {
+           path:'36',
+           name:'在线课堂  ', 
+           component:List
+        }
+      ]
+    },
+    // {
+    //   path:'*',
+    //   name:'/tips',
+    //   component: Tips404
+    // }
   ]
 })
 // 添加动态路由
-Axios.get('./static/data.json').then(res => {
-  let router = res.data.data
-  // router = filterAsyncRouter(getAsycRouter(router))
-  router = getAsycRouter(router)
-  indexRouter.addRoutes(router)
+getHeadNav().then(res => {
+  if (res.code == 200) {
+    let router = res.rows
+    let asyc = getAsycRouter(router)
+    indexRouter.addRoutes(asyc)
+    let search = searchRouter(router)
+    // console.log(search)
+    indexRouter.addRoutes(search)
+  }
+  
 })
 // 遍历创建路由表
 function getAsycRouter(object) {
@@ -92,52 +147,58 @@ function getAsycRouter(object) {
     let temporary = {}
     if (object[i].children) {
       let child = object[i].children
-      temporary.redirect = object[i].id + '/' + child[0].id
+      temporary.redirect = object[i].newsTypeId + '/' + child[0].newsTypeId
       let childArr = []
       for (let j = 0; j < child.length; j++) {
         let childItem = {}
-        childItem.path = '/' + object[i].id + '/' + child[j].id
+        childItem.path = '/' + object[i].newsTypeId + '/' + child[j].newsTypeId
         childItem.name = child[j].name
-        childItem.component = getType(child[j].type)
+        childItem.component = getType(child[j].mode)
         childArr.push(childItem)
       }
       temporary.children = childArr
     }
-    temporary.path = '/' + object[i].id
+    temporary.path = '/' + object[i].newsTypeId
     temporary.name = object[i].name
     temporary.component = MiddleLayer
     result.push(temporary)
   }
   return result
 }
-// 添加coponent
-// function filterAsyncRouter(asyncRouterMap) {
-//   const AsycRouter = asyncRouterMap.filter(route => {
-//     if (route.component) {
-//       route.component = _import(route.component)
-//     }
-//     if (route.children && route.children.length) {
-//       route.children = filterAsyncRouter(route.children)
-//     }
+//遍历创建search路由
+function searchRouter(obj) {
+  // console.log(obj)
+  let result = []
+  let temporary = {}
+  let childArr = []
+  childArr.push({path: '/search/0', name: '全部',component: List})
 
-//     return true
-//   })
-//   return AsycRouter
-// }
+  for (let i = 0; i < obj.length; i++) {
+    let childItem = {}
+    childItem.path = '/search/' + obj[i].newsTypeId
+    childItem.name = obj[i].name + " "
+    childItem.component = List
+    childArr.push(childItem)
+  }
+  temporary.redirect = 'search/0'
+  temporary.children = childArr
+  temporary.path = '/search'
+  temporary.name = '搜索'
+  temporary.component = MiddleLayer
+  result.push(temporary)
+  return result
+}
 function getType(type) {
   let str
   switch (type) {
-    case 1:
+    case '1':
       str = List
       break
-    case 2:
+    case '2':
       str = Textures
       break
-    case 3:
-      str = Card
-      break
-    case 4:
-      str = Card
+    case '3':
+      str = Threed
       break
   }
   return str
